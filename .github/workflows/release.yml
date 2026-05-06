@@ -19,12 +19,9 @@ on:
   # Changesets-driven prereleases and stable releases
   push:
     branches:
-      - "release-next"
-      - "release-v6"
+      - release-next
+      - release-v6
   # Nightly releases
-  schedule:
-    - cron: "0 7 * * *" # every day at 12AM PST
-  # Experimental Releases
   workflow_dispatch:
     inputs:
       branch:
@@ -41,7 +38,7 @@ jobs:
   release:
     name: 🦋 Changesets Release
     if: github.repository == 'remix-run/react-router' && github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       published_packages: ${{ steps.changesets.outputs.publishedPackages }}
       published: ${{ steps.changesets.outputs.published }}
@@ -62,7 +59,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24 # Needed for npm@11 for Trusted Publishing
-          cache: "pnpm"
+          cache: pnpm
 
       - name: 📥 Install deps
         run: pnpm install --frozen-lockfile
@@ -79,8 +76,8 @@ jobs:
         uses: changesets/action@v1.4.10
         with:
           version: pnpm run changeset:version
-          commit: "chore: Update version for release"
-          title: "chore: Update version for release"
+          commit: 'chore: Update version for release'
+          title: 'chore: Update version for release'
           publish: pnpm run release
           createGithubReleases: false
         env:
@@ -89,7 +86,7 @@ jobs:
   find_package_version:
     name: 🦋 Find Package
     needs: [release]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.repository == 'remix-run/react-router' && github.event_name == 'push' && github.ref_name != 'release-v6' && needs.release.outputs.published == 'true'
     outputs:
       package_version: ${{ steps.find_package_version.outputs.package_version }}
@@ -104,21 +101,21 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24 # Needed for npm@11 for Trusted Publishing
-          cache: "pnpm"
+          cache: pnpm
 
       - id: find_package_version
         run: |
           package_version=$(node ./scripts/find-release-from-changeset.js)
           echo "package_version=${package_version}" >> $GITHUB_OUTPUT
         env:
-          PACKAGE_VERSION_TO_FOLLOW: "react-router"
+          PACKAGE_VERSION_TO_FOLLOW: react-router
           PUBLISHED_PACKAGES: ${{ needs.release.outputs.published_packages }}
 
   comment:
     name: 📝 Comment on related issues and pull requests
     if: github.repository == 'remix-run/react-router' && github.event_name == 'push' && github.ref_name != 'release-v6' && needs.find_package_version.outputs.package_version != ''
     needs: [release, find_package_version]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       issues: write # enable commenting on released issues
       pull-requests: write # enable commenting on released pull requests
@@ -131,9 +128,9 @@ jobs:
       - name: 📝 Comment on related issues and pull requests
         uses: remix-run/release-comment-action@v0.4.2
         with:
-          DIRECTORY_TO_CHECK: "./packages"
-          PACKAGE_NAME: "react-router"
-          ISSUE_LABELS_TO_REMOVE: "awaiting release"
+          DIRECTORY_TO_CHECK: ./packages
+          PACKAGE_NAME: react-router
+          ISSUE_LABELS_TO_REMOVE: awaiting release
 
   # HEADS UP! this "nightly" job will only ever run on the `main` branch due to
   # it being a cron job, and the last commit on main will be what github shows
@@ -144,7 +141,7 @@ jobs:
   release-nightly:
     name: 🌒 Nightly Release
     if: github.repository == 'remix-run/react-router' && github.event_name == 'schedule'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # enable pushing changes to the origin
       id-token: write # enable generation of an ID token for publishing
@@ -167,7 +164,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24 # Needed for npm@11 for Trusted Publishing
-          cache: "pnpm"
+          cache: pnpm
 
       - name: 📥 Install deps
         run: pnpm install --frozen-lockfile
@@ -215,7 +212,7 @@ jobs:
   release-experimental:
     name: 🧪 Experimental Release
     if: github.repository == 'remix-run/react-router' && github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # enable pushing changes to the origin
       id-token: write # enable generation of an ID token for publishing
@@ -235,7 +232,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24 # Needed for npm@11 for Trusted Publishing
-          cache: "pnpm"
+          cache: pnpm
 
       - name: 📥 Install deps
         run: pnpm install --frozen-lockfile
